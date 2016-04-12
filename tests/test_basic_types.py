@@ -12,6 +12,9 @@ from object_validator import InvalidTypeError, InvalidValueError
 PY2 = sys.version_info < (3,)
 if PY2:
     str = unicode
+    from types import NoneType
+else:
+    NoneType = type(None)
 
 
 def test_bool():
@@ -124,6 +127,18 @@ def test_choices_invalid_value():
     assert error.object_name == ""
     assert error.object_value == "c"
 
+
+def test_nullable():
+    _validate(None, String(nullable=True))
+
+
+def test_nullable_negative():
+    error = pytest.raises(InvalidTypeError, lambda:
+        _validate(None, String(choices=("a", "b")))
+    ).value
+
+    assert error.object_name == ""
+    assert error.object_type == NoneType
 
 
 def _validate(obj, scheme):

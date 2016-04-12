@@ -8,6 +8,9 @@ import sys
 _PY2 = sys.version_info < (3,)
 if _PY2:
     str = unicode
+    from types import NoneType
+else:
+    NoneType = type(None)
 
 
 class Error(Exception):
@@ -133,17 +136,25 @@ class _BasicType(Object):
     __choices = None
     """A list of values we must to compare the validated object with."""
 
-    def __init__(self, choices=None, **kwargs):
+    __nullable = False
+    """True if the object value is nullable."""
+
+    def __init__(self, choices=None, nullable=False, **kwargs):
         super(_BasicType, self).__init__(**kwargs)
 
         if choices is not None:
             self.__choices = choices
 
+        self.__nullable = nullable
+
     def validate(self, obj):
         """Validates the specified object."""
 
         if type(obj) not in self._types:
-            raise InvalidTypeError(obj)
+            if self.__nullable and type(obj) == NoneType:
+                pass
+            else:
+                raise InvalidTypeError(obj)
 
         if self.__choices is not None and obj not in self.__choices:
             raise InvalidValueError(obj)
